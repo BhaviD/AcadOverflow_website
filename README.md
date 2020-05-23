@@ -1,4 +1,4 @@
-# SE_Project: AcadOverFlow
+# AcadOverFlow
 ### AcadOverFlow is a platform for professional and enthusiast programmers of IIIT-H where technical questions can be posted/queried by any student, so that fellow peers can post responses to it or previously asked similar questions can be listed along with the answers.
 
 #### There are some system requirements:
