@@ -5,11 +5,11 @@ import numpy as np
 import gensim
 from sklearn.metrics.pairwise import cosine_similarity
 
-data = pd.read_csv('../ML_Module/models/Preprocessed_data.csv')
+data = pd.read_csv('./ML_Module/models/Preprocessed_data.csv')
 
-all_title_embeddings = pd.read_csv('../ML_Module/models/title_embeddings.csv').values
+all_title_embeddings = pd.read_csv('./ML_Module/models/title_embeddings.csv').values
 
-w2v_model = gensim.models.word2vec.Word2Vec.load('../ML_Module/models/SO_word2vec_embeddings.bin')
+w2v_model = gensim.models.word2vec.Word2Vec.load('./ML_Module/models/SO_word2vec_embeddings.bin')
 
 def question_to_vec(question, embeddings, dim=300):
     question_embedding = np.zeros(dim)

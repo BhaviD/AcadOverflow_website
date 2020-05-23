@@ -17,26 +17,25 @@ import re
 sys.path.insert(0, "./app")
 sys.path.insert(0, "./")
 
-# import tensorflow as tf
-# import keras
+import tensorflow as tf
+import keras
 import os
 import numpy as np
-# import spacy
+import spacy
 import pandas as pd
-# import keras.losses
-# import pickle
-# import keras.backend as K
+import keras.losses
+import pickle
+import keras.backend as K
 import utils
-import ipdb
+import gensim
 
-# from keras.models import load_model
-# from keras.preprocessing.text import Tokenizer
-# from keras.preprocessing.sequence import pad_sequences
-# from sklearn.preprocessing import MultiLabelBinarizer
-# from search import searchresults
-# from utils import preprocess_text
-
-# EN = spacy.load('en_core_web_sm')
+from sklearn.metrics.pairwise import cosine_similarity
+from keras.models import load_model
+from keras.preprocessing.text import Tokenizer
+from keras.preprocessing.sequence import pad_sequences
+from sklearn.preprocessing import MultiLabelBinarizer
+from search import searchresults
+from utils import preprocess_text
 
 sys.path.append("./app")
 sys.path.append("./app/gql_client")
@@ -54,66 +53,66 @@ from session_data.data_handling import csv_query_user_questions
 
 
 # Custom loss function to handle multilabel classification task
-# def multitask_loss(y_true, y_pred):
-# 	# Avoid divide by 0
-# 	y_pred = K.clip(y_pred, K.epsilon(), 1 - K.epsilon())
-# 	# Multi-task loss
-# 	return K.mean(K.sum(- y_true * K.log(y_pred) - (1 - y_true) * K.log(1 - y_pred), axis=1))
+def multitask_loss(y_true, y_pred):
+	# Avoid divide by 0
+	y_pred = K.clip(y_pred, K.epsilon(), 1 - K.epsilon())
+	# Multi-task loss
+	return K.mean(K.sum(- y_true * K.log(y_pred) - (1 - y_true) * K.log(1 - y_pred), axis=1))
 
-# def load_tag_encoder(data):
-# 	data.tags = data.tags.apply(lambda x: x.split('|'))
-# 	tag_freq_dict = {}
-# 	for tags in data.tags:
-# 		for tag in tags:
-# 			if tag not in tag_freq_dict:
-# 				tag_freq_dict[tag] = 0
-# 			else:
-# 				tag_freq_dict[tag] += 1
-# 	# Get most common tags
-# 	tags_to_use = 600
-# 	tag_freq_dict_sorted = sorted(tag_freq_dict.items(), key=lambda x: x[1], reverse=True)
-# 	final_tags = tag_freq_dict_sorted[:tags_to_use]
-# 	for i in range(len(final_tags)):
-# 		final_tags[i] = final_tags[i][0]
+def load_tag_encoder(data):
+	data.tags = data.tags.apply(lambda x: x.split('|'))
+	tag_freq_dict = {}
+	for tags in data.tags:
+		for tag in tags:
+			if tag not in tag_freq_dict:
+				tag_freq_dict[tag] = 0
+			else:
+				tag_freq_dict[tag] += 1
+	# Get most common tags
+	tags_to_use = 600
+	tag_freq_dict_sorted = sorted(tag_freq_dict.items(), key=lambda x: x[1], reverse=True)
+	final_tags = tag_freq_dict_sorted[:tags_to_use]
+	for i in range(len(final_tags)):
+		final_tags[i] = final_tags[i][0]
 
-# 	final_tag_data = []
-# 	X = []
-# 	for i in range(0, len(data)):
-# 		temp = []
-# 		for tag in data.iloc[i].tags:
-# 			if tag in final_tags:
-# 				temp.append(tag)
-# 			if(temp != []):
-# 				final_tag_data.append(temp)
-# 				X.append(data.iloc[i].processed_title)
-# 	tag_encoder = MultiLabelBinarizer()
-# 	tags_encoded = tag_encoder.fit_transform(final_tag_data)
-# 	return tag_encoder
+	final_tag_data = []
+	X = []
+	for i in range(0, len(data)):
+		temp = []
+		for tag in data.iloc[i].tags:
+			if tag in final_tags:
+				temp.append(tag)
+			if(temp != []):
+				final_tag_data.append(temp)
+				X.append(data.iloc[i].processed_title)
+	tag_encoder = MultiLabelBinarizer()
+	tags_encoded = tag_encoder.fit_transform(final_tag_data)
+	return tag_encoder
 
-# def predict_tags(text):
-# 	# Tokenize text
-# 	x_test = pad_sequences(tokenizer.texts_to_sequences([text]), maxlen=300)
-# 	# Predict
-# 	with graph.as_default():
-# 		prediction = model.predict([x_test])[0]
-# 	for i,value in enumerate(prediction):
-# 		if value > 0.5:
-# 			prediction[i] = 1
-# 		else:
-# 			prediction[i] = 0
-# 	tags = tag_encoder.inverse_transform(np.array([prediction]))
-# 	return tags
+def predict_tags(text):
+	# Tokenize text
+	x_test = pad_sequences(tokenizer.texts_to_sequences([text]), maxlen=300)
+	# Predict
+	with graph.as_default():
+		prediction = model.predict([x_test])[0]
+	for i,value in enumerate(prediction):
+		if value > 0.5:
+			prediction[i] = 1
+		else:
+			prediction[i] = 0
+	tags = tag_encoder.inverse_transform(np.array([prediction]))
+	return tags
 
 data = get_preprocessed_data()
-# tag_encoder = load_tag_encoder(data)
+tag_encoder = load_tag_encoder(data)
 
-# MAX_SEQUENCE_LENGTH = 300
-# with open('../ML_Module/models/tokenizer.pickle', 'rb') as handle:
-#     tokenizer = pickle.load(handle)
-# keras.losses.multitask_loss = multitask_loss
-# global graph
-# graph = tf.get_default_graph()
-# model = load_model('../ML_Module/models/Tag_predictor.h5')
+MAX_SEQUENCE_LENGTH = 300
+with open('./ML_Module/models/tokenizer.pickle', 'rb') as handle:
+    tokenizer = pickle.load(handle)
+keras.losses.multitask_loss = multitask_loss
+global graph
+graph = tf.get_default_graph()
+model = load_model('./ML_Module/models/Tag_predictor.h5')
 
 
 # Index
@@ -215,8 +214,6 @@ def login():
 	session['lname'] = lname
 	session['profile_img'] = fname + ".jpg"
 
-	print (session)
-
 	return redirect(url_for('home'))
 
 
@@ -237,54 +234,6 @@ def home():
 def ask_question():
 	return render_template('ask_question.html')
 
-search_results = [
-    {
-      "Body": " comparaison two list python string like", 
-      "similarity_score": "1.000", 
-	  "Id": "30453",
-      "Tags": "python|list", 
-      "Title": "Comparaison of two list in python", 
-      "url": "https://stackoverflow.com/questions/16295770", 
-      "votes": "2.9678147352433087e-05"
-    }, 
-    {
-      "Body": " compare two list list python two list", 
-      "similarity_score": "0.945", 
-	  "Id": "144809",
-      "Tags": "python|python-2.7|python-3.x|list|append", 
-      "Title": "Compare two list of list in python", 
-      "url": "https://stackoverflow.com/questions/46621588", 
-      "votes": "-0.0007734271932980822"
-    }, 
-    {
-      "Body": " two different randomchoices list python complete python noob slowly wrapping head around making 1v1 halo 3 tournament style program randomly matches players picks map gametype etc", 
-      "similarity_score": "0.941", 
-	  "Id": "80715",
-      "Tags": "python|random", 
-      "Title": "Two different random.choices from a list (python)", 
-      "url": "https://stackoverflow.com/questions/32492428", 
-      "votes": "-0.00037187452297282456"
-    }, 
-    {
-      "Body": " python concatenation two list new python need", 
-      "similarity_score": "0.931", 
-	  "Id": "45585",
-      "Tags": "python|string|list|python-2.7|concatenation", 
-      "Title": "Python, concatenation of two list", 
-      "url": "https://stackoverflow.com/questions/21817132", 
-      "votes": "-0.00010417274275598612"
-    }, 
-    {
-      "Body": " combine two list list list python let say print c 10 0 14 1 16 2", 
-      "similarity_score": "0.931", 
-	  "Id": "97353",
-      "Tags": "python|list|python-2.7", 
-      "Title": "How combine two list into list of list at python?", 
-      "url": "https://stackoverflow.com/questions/36695176", 
-      "votes": "0.0008327834880029483"
-    }
-]
-
 @app.route('/AddQuestionNext',methods=['GET','POST'])
 def AddQuestionNext():
 	# To find out the method of request, use 'request.method'
@@ -294,20 +243,20 @@ def AddQuestionNext():
 	elif request.method == "POST":
 		title = request.form['title']
 		body = str(request.form['body'])
-	# search_results = searchresults(title, 5)
-	# tags_list = list(predict_tags(title))
-	tags = ["tag1", "tag2", "tag3"]
+	search_results = searchresults(title, 5)
+	tags_list = list(predict_tags(title))
 	clean = re.compile('<.*?>')
 	body = re.sub(clean, '', body)
 	page, per_page, offset = get_page_args(page_parameter='page', per_page_parameter='per_page')
 	total = len(search_results)
 	p_questions = search_results[offset: offset + per_page]
 	pagination = Pagination(page=page, per_page=per_page, total=total)
-	return render_template('post_question_confirmation.html', similar_questions=p_questions, page=page, per_page=per_page, pagination=pagination, title = title, body = body, tags_list = tags)
+	return render_template('post_question_confirmation.html', similar_questions=p_questions, page=page, per_page=per_page, pagination=pagination, title = title, body = body, tags_list = tags_list)
 
 
 @app.route('/SearchQuestionNext',methods=['GET','POST'])
 def SearchQuestionNext():
+	'''
 	# To find out the method of request, use 'request.method'
 	id_list = [75, 76, 77, 78, 79, 80]
 	questions = []
@@ -323,7 +272,23 @@ def SearchQuestionNext():
 	# tags_list = ['tag1', 'tag2']
 	print(title)
 	# print(body)
-	return render_template('search_questions.html',title = title, id_list = questions)
+	'''
+        # To find out the method of request, use 'request.method'
+	if request.method == "GET":
+		title = request.args.get("question")
+               # body = request.args.get("body")
+	elif request.method == "POST":
+		title = request.form['question']
+                #body = str(request.form['body'])
+	search_results = searchresults(title, 5)
+	tags_list = list(predict_tags(title))
+        #clean = re.compile('<.*?>')
+        #body = re.sub(clean, '', body)
+	page, per_page, offset = get_page_args(page_parameter='page', per_page_parameter='per_page')
+	total = len(search_results)
+	p_questions = search_results[offset: offset + per_page]
+	pagination = Pagination(page=page, per_page=per_page, total=total)
+	return render_template('search_questions.html',title = title, id_list = search_results)
 
 # Dummy Page to be deleted once the question link works
 @app.route('/dummy')
@@ -401,17 +366,9 @@ def post_new_question():
 
 @app.route('/my_questions')
 def my_questions():
-	questions = csv_query_user_questions(session['userId'])
-
-	# TODO: what if there are 0 questions by this user?
-	# if not questions:
-	#	?
-
+	users = csv_query_user_questions(session['userId'])
 	page, per_page, offset = get_page_args(page_parameter='page', per_page_parameter='per_page')
-	print ("page, per_page, offset: ", page, per_page, offset)
-	total = len(questions)
-	pagination_questions = questions[offset: offset + per_page]
+	total = len(users)
+	pagination_users = users[offset: offset + per_page]
 	pagination = Pagination(page=page, per_page=per_page, total=total)
-	for i in range (10):
-		print ("Question {}: ".format(i), pagination_questions[i])
-	return render_template('my_questions.html', questions=pagination_questions, page=page, per_page=per_page, pagination=pagination)
+	return render_template('my_questions.html', questions=pagination_users, page=page, per_page=per_page, pagination=pagination)
