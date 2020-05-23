@@ -38,15 +38,3 @@ python3 run.py
 
 Webserver will run on http://127.0.0.1:8889/ . The website can be accessed using this address.
 The user can register and then login into the AcadOverFlow Webapp. :)
-
-## Submitted by:
-* **Aditi Shrivastava: 2018201056**
-* **Bhavi Dhingra: 2018201058**
-* **Kajal Mohan Sanklecha: 2019801006**
-* **Surbhi:2019202002**
-* **Nikita Rungta: 20161178**
-* **Samyak Agrawal: 20161180**
-####
-(As a part of Software Engineering Project in IIIT-H)
-
-
